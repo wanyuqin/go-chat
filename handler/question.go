@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sashabaranov/go-openai"
@@ -21,7 +22,7 @@ func PostQuestion(c *gin.Context) {
 		return
 
 	}
-
+	fmt.Println(q.Content)
 	answer := chat(q.Content)
 	resp := make(map[string]interface{})
 	resp["data"] = answer
@@ -29,7 +30,9 @@ func PostQuestion(c *gin.Context) {
 }
 
 func chat(content string) string {
-	client := openai.NewClient("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")
+	key := os.Getenv("CHAT_KEY")
+
+	client := openai.NewClient(key)
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{

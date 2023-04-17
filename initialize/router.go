@@ -3,7 +3,9 @@ package initialize
 import (
 	"github.com/gin-gonic/gin"
 
-	"go-chat/handler"
+	"github.com/gin-contrib/cors"
+
+	"go-chat/router"
 )
 
 // wxfd7246ec04b25911 appID
@@ -11,8 +13,9 @@ import (
 
 func InitRouter() {
 	engine := gin.Default()
-
-	engine.POST("/question", handler.PostQuestion)
+	engine.Use(cors.Default())
+	v1 := engine.Group("/v1")
+	router.QuestionRouter(v1)
 
 	engine.Run("0.0.0.0:8081")
 }
