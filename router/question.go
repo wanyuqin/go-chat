@@ -8,4 +8,5 @@ import (
 
 func QuestionRouter(e *gin.RouterGroup) {
 	e.POST("/question", handler.PostQuestion)
+	e.Any("/conversation", handler.Conversation)
 }
