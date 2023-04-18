@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -59,22 +60,23 @@ func chat(content string) string {
 	return resp.Choices[0].Message.Content
 }
 
-func ChatStream(conn *websocket.Conn, content string) {
+func ChatStream(conn *websocket.Conn, content []ConversationBody) {
 	key := os.Getenv("CHAT_KEY")
 
 	c := openai.NewClient(key)
 	ctx := context.Background()
-
+	ocm := make([]openai.ChatCompletionMessage, 0, len(content))
+	for _, v := range content {
+		ocm = append(ocm, openai.ChatCompletionMessage{
+			Role:    v.Role,
+			Content: v.Content,
+		})
+	}
 	req := openai.ChatCompletionRequest{
 		Model:     openai.GPT3Dot5Turbo,
 		MaxTokens: 1000,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: content,
-			},
-		},
-		Stream: true,
+		Messages:  ocm,
+		Stream:    true,
 	}
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
@@ -107,6 +109,11 @@ func ChatStream(conn *websocket.Conn, content string) {
 	}
 }
 
+type ConversationBody struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
 func Conversation(c *gin.Context) {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -122,13 +129,16 @@ func Conversation(c *gin.Context) {
 		fmt.Println(err)
 	}
 	for {
-		_, message, err := conn.ReadMessage()
-		fmt.Println(string(message))
+		mt, message, err := conn.ReadMessage()
+		fmt.Println(mt)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		ChatStream(conn, string(message))
+		cbs := make([]ConversationBody, 0)
+		json.Unmarshal(message, &cbs)
+		fmt.Printf("%v\n", cbs)
+		ChatStream(conn, cbs)
 	}
 
 }

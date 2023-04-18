@@ -4,6 +4,6 @@ import "testing"
 
 func TestChatStream(t *testing.T) {
 
-	ChatStream("go 语言发展前景")
+	// ChatStream("go 语言发展前景")
 
 }
